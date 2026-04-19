@@ -832,5 +832,26 @@ window.showEduPanel = function(id) {
   tabs[id].classList.add('active-' + id);
 };
 </script>
+
+<script>
+// Fix: exponer showEduPanel globalmente
+window.showEduPanel = function(id) {
+  // Ocultar todos los paneles
+  document.querySelectorAll('.edu-panel').forEach(function(p) {
+    p.classList.remove('visible');
+  });
+  // Quitar active de todos los tabs
+  document.querySelectorAll('.edu-tab').forEach(function(t) {
+    t.classList.remove('active-desemp', 'active-monet', 'active-multi');
+  });
+  // Mostrar el panel seleccionado
+  var panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('visible');
+  // Activar el tab seleccionado
+  var tab = document.getElementById('tab-' + id);
+  if (tab) tab.classList.add('active-' + id);
+};
+</script>
+
 </body>
 </html>
