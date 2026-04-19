@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indicadores Sociales Colombia — Análisis DANE 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<style>
+ .powrLoaded iframe { visibility: hidden; } 
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 24px; color: #222; }
+  
+  .header { text-align: center; margin-bottom: 28px; }
+  .header h1 { font-size: 24px; color: #6b1234; font-weight: 700; }
+  .header p { font-size: 13px; color: #666; margin-top: 6px; }
+  .badge { display: inline-block; background: #6b1234; color: white; border-radius: 20px; padding: 4px 14px; font-size: 12px; margin-top: 8px; }
+
+  .section-title { font-size: 18px; font-weight: 700; color: #1a1a2e; margin: 32px 0 16px 0; border-bottom: 3px solid #6b1234; padding-bottom: 8px; }
+
+  /* ANÁLISIS */
+  .analysis-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+  .analysis-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-top: 5px solid; }
+  .analysis-card.desempleo { border-color: #6b1234; }
+  .analysis-card.monetaria { border-color: #ea580c; }
+  .analysis-card.multi { border-color: #16a34a; }
+  .analysis-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .analysis-card .kpi { font-size: 32px; font-weight: 800; margin: 8px 0 4px; }
+  .analysis-card .kpi.desempleo { color: #6b1234; }
+  .analysis-card .kpi.monetaria { color: #ea580c; }
+  .analysis-card .kpi.multi { color: #16a34a; }
+  .analysis-card .kpi-label { font-size: 11px; color: #888; margin-bottom: 12px; }
+  .analysis-card .delta { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+  .delta.mejora { background: #dcfce7; color: #16a34a; }
+  .delta.empeora { background: #fee2e2; color: #dc2626; }
+  .delta.neutral { background: #f1f5f9; color: #475569; }
+  .analysis-card p { font-size: 12px; color: #555; line-height: 1.6; margin-top: 10px; }
+
+  /* CONTEXTO */
+  .context-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+  .context-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .context-card h3 { font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .context-card p { font-size: 12.5px; color: #444; line-height: 1.7; }
+  .timeline { border-left: 3px solid #6b1234; padding-left: 16px; margin-top: 10px; }
+  .timeline-item { margin-bottom: 12px; position: relative; }
+  .timeline-item::before { content: '●'; position: absolute; left: -22px; color: #6b1234; font-size: 12px; }
+  .timeline-item .year { font-weight: 700; font-size: 12px; color: #6b1234; }
+  .timeline-item .desc { font-size: 12px; color: #555; line-height: 1.5; }
+  .highlight-box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 12px; margin-top: 12px; font-size: 12px; color: #7c2d12; line-height: 1.6; }
+  .highlight-box.green { background: #f0fdf4; border-color: #bbf7d0; color: #14532d; }
+  .highlight-box.blue { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
+
+  /* GRÁFICAS */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+  .chart-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-card h2 { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 4px; }
+  .chart-card .chart-sub { font-size: 11px; color: #888; margin-bottom: 14px; }
+  .petro-legend { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #555; background: #fef9c3; border: 1px solid #fde047; border-radius: 6px; padding: 4px 10px; margin-bottom: 10px; }
+  canvas { max-height: 260px; }
+
+  /* CONCLUSIONES */
+  .conclusiones { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+  .conclusiones h3 { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 16px; }
+  .conclusion-item { display: flex; gap: 12px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9; }
+  .conclusion-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .con-icon { font-size: 20px; flex-shrink: 0; }
+  .con-text h4 { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+  .con-text p { font-size: 12px; color: #555; line-height: 1.6; }
+
+  .source { text-align: center; font-size: 11px; color: #999; padding: 12px 0; }
+
+
+      @keyframes claude-pulse {
+        0% {
+          box-shadow: 
+            inset 0 0 10px rgba(217, 119, 87, 0.5),
+            inset 0 0 20px rgba(217, 119, 87, 0.3),
+            inset 0 0 30px rgba(217, 119, 87, 0.1);
+        }
+        50% {
+          box-shadow: 
+            inset 0 0 15px rgba(217, 119, 87, 0.7),
+            inset 0 0 25px rgba(217, 119, 87, 0.5),
+            inset 0 0 35px rgba(217, 119, 87, 0.2);
+        }
+        100% {
+          box-shadow: 
+            inset 0 0 10px rgba(217, 119, 87, 0.5),
+            inset 0 0 20px rgba(217, 119, 87, 0.3),
+            inset 0 0 30px rgba(217, 119, 87, 0.1);
+        }
+      }
+    
+.comp-section{max-width:1364px;margin:0 auto 40px;padding:0 24px}.comp-section-title{font-size:18px;font-weight:700;color:#1a1a2e;margin:0 0 20px 0;border-bottom:3px solid #0369a1;padding-bottom:8px}.veredicto{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:28px}.v-card{border-radius:12px;padding:20px;text-align:center;position:relative;overflow:hidden}.v-card.mejor{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #16a34a}.v-card.peor{background:linear-gradient(135deg,#fef2f2,#fee2e2);border:2px solid #dc2626}.v-card.mixto{background:linear-gradient(135deg,#fffbeb,#fef9c3);border:2px solid #d97706}.v-card .v-icon{font-size:36px;margin-bottom:8px}.v-card .v-label{font-size:12px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.5px}.v-card .v-title{font-size:16px;font-weight:800;margin:6px 0 4px}.v-card.mejor .v-title{color:#15803d}.v-card.peor .v-title{color:#b91c1c}.v-card.mixto .v-title{color:#92400e}.v-card .v-desc{font-size:11.5px;color:#555;line-height:1.5}.v-stamp{position:absolute;top:12px;right:12px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}.mejor .v-stamp{background:#16a34a;color:white}.peor .v-stamp{background:#dc2626;color:white}.mixto .v-stamp{background:#d97706;color:white}.comp-table-wrap{background:white;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);overflow:hidden;margin-bottom:28px}.comp-table{width:100%;border-collapse:collapse;font-size:13px}.comp-table thead tr{background:#1e3a5f;color:white}.comp-table thead th{padding:14px 18px;text-align:center;font-weight:600;font-size:12px;letter-spacing:.3px}.comp-table thead th:first-child{text-align:left}.comp-table tbody tr{border-bottom:1px solid #f1f5f9}.comp-table tbody tr:hover{background:#f8fafc}.comp-table tbody td{padding:13px 18px;text-align:center;color:#333}.comp-table tbody td:first-child{text-align:left;font-weight:600;color:#1a1a2e}.col-pre{background:#eff6ff!important}.col-actual{background:#f0fdf4!important}.col-delta{font-weight:700!important}.delta-neg{color:#dc2626}.delta-pos{color:#16a34a}.pill{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}.pill.red{background:#fee2e2;color:#b91c1c}.pill.green{background:#dcfce7;color:#15803d}.pill.yellow{background:#fef9c3;color:#78350f}.cat-header td{background:#f8fafc!important;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;padding:8px 18px!important}.comp-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px}.comp-chart-card{background:white;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.08)}.comp-chart-card.full{grid-column:1/-1}.comp-chart-card h2{font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:4px}.comp-chart-card .csub{font-size:11px;color:#888;margin-bottom:14px}.comp-chart-card canvas{max-height:240px}.semaforo{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}.sem-card{background:white;border-radius:12px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.07)}.sem-card h3{font-size:13px;font-weight:700;margin-bottom:12px;color:#1a1a2e}.sem-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:12px}.sem-row:last-child{border-bottom:none}.sem-label{color:#555}.sem-val{font-weight:700}.sem-ico{font-size:14px;margin-left:4px}.comp-conclusion{background:linear-gradient(135deg,#1e3a5f,#0369a1);color:white;border-radius:14px;padding:28px;margin-bottom:20px}.comp-conclusion h3{font-size:17px;font-weight:800;margin-bottom:18px}.cc-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.cc-item{background:rgba(255,255,255,.1);border-radius:10px;padding:16px}.cc-item h4{font-size:13px;font-weight:700;margin-bottom:8px;color:#bfdbfe}.cc-item p{font-size:12px;line-height:1.65;color:#e0f2fe}.verdict-banner{background:rgba(255,255,255,.15);border-radius:10px;padding:16px;margin-top:18px;text-align:center;font-size:14px;font-weight:600}.verdict-banner span{font-size:24px;display:block;margin-bottom:6px}
+
+  .edu-section { max-width: 1364px; margin: 0 auto 40px; padding: 0 24px; }
+  .edu-section-title { font-size: 20px; font-weight: 800; color: #1a1a2e; margin: 0 0 6px 0; border-bottom: 3px solid #6b1234; padding-bottom: 10px; }
+  .edu-section-sub { font-size: 13px; color: #666; margin-bottom: 24px; }
+
+  /* TABS */
+  .edu-tabs { display: flex; gap: 0; margin-bottom: 0; border-radius: 12px 12px 0 0; overflow: hidden; border: 1px solid #e2e8f0; border-bottom: none; }
+  .edu-tab { flex: 1; padding: 14px 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 700; background: #f8fafc; color: #64748b; border-right: 1px solid #e2e8f0; transition: all .2s; user-select: none; }
+  .edu-tab:last-child { border-right: none; }
+  .edu-tab.active-desemp { background: #6b1234; color: white; }
+  .edu-tab.active-monet  { background: #ea580c; color: white; }
+  .edu-tab.active-multi  { background: #16a34a; color: white; }
+  .edu-tab:hover:not(.active-desemp):not(.active-monet):not(.active-multi) { background: #f1f5f9; }
+
+  /* PANEL */
+  .edu-panel { display: none; background: white; border: 1px solid #e2e8f0; border-radius: 0 0 14px 14px; padding: 28px; box-shadow: 0 4px 12px rgba(0,0,0,.07); }
+  .edu-panel.visible { display: block; }
+  .edu-panel-header { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 2px solid #f1f5f9; }
+  .edu-panel-icon { font-size: 52px; flex-shrink: 0; }
+  .edu-panel-header h2 { font-size: 22px; font-weight: 800; margin: 0 0 6px; }
+  .edu-panel-header .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-right: 6px; }
+  .tag-desemp { background: #fce7f3; color: #6b1234; }
+  .tag-monet  { background: #fff7ed; color: #c2410c; }
+  .tag-multi  { background: #f0fdf4; color: #15803d; }
+  .edu-panel-header p { font-size: 13px; color: #555; line-height: 1.7; margin-top: 10px; }
+
+  /* GRID 3 COLS */
+  .edu-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .edu-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .edu-box { border-radius: 10px; padding: 18px; }
+  .edu-box h4 { font-size: 13px; font-weight: 800; margin: 0 0 10px; display: flex; align-items: center; gap: 7px; }
+  .edu-box p, .edu-box li { font-size: 12.5px; color: #444; line-height: 1.7; }
+  .edu-box ul { padding-left: 18px; margin: 0; }
+  .edu-box li { margin-bottom: 5px; }
+  .box-blue   { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .box-blue h4 { color: #1e40af; }
+  .box-green  { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .box-green h4 { color: #15803d; }
+  .box-red    { background: #fef2f2; border: 1px solid #fecaca; }
+  .box-red h4 { color: #b91c1c; }
+  .box-yellow { background: #fffbeb; border: 1px solid #fde68a; }
+  .box-yellow h4 { color: #78350f; }
+  .box-purple { background: #faf5ff; border: 1px solid #ddd6fe; }
+  .box-purple h4 { color: #5b21b6; }
+  .box-slate  { background: #f8fafc; border: 1px solid #e2e8f0; }
+  .box-slate h4 { color: #334155; }
+
+  /* FORMULA */
+  .formula-box { background: #1e293b; color: white; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; font-family: monospace; font-size: 13px; text-align: center; }
+  .formula-box .f-title { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .formula-box .f-eq { font-size: 15px; color: #7dd3fc; font-weight: 700; }
+  .formula-box .f-sub { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+
+  /* FACTORS */
+  .factors-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .factor-card { border-radius: 10px; padding: 16px; }
+  .factor-card.up   { background: #fef2f2; border-left: 4px solid #dc2626; }
+  .factor-card.down { background: #f0fdf4; border-left: 4px solid #16a34a; }
+  .factor-card h4   { font-size: 12px; font-weight: 800; margin: 0 0 10px; display: flex; align-items: center; gap: 6px; }
+  .factor-card.up h4   { color: #b91c1c; }
+  .factor-card.down h4 { color: #15803d; }
+  .factor-card ul   { padding-left: 16px; margin: 0; }
+  .factor-card li   { font-size: 12px; color: #444; line-height: 1.65; margin-bottom: 4px; }
+
+  /* DIMENSIONES */
+  .dim-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+  .dim-card { background: white; border: 2px solid #bbf7d0; border-radius: 10px; padding: 14px 10px; text-align: center; }
+  .dim-card .dim-icon { font-size: 28px; margin-bottom: 6px; }
+  .dim-card .dim-name { font-size: 11px; font-weight: 700; color: #15803d; margin-bottom: 4px; }
+  .dim-card .dim-vars { font-size: 10px; color: #555; line-height: 1.5; }
+
+  /* DATO CLAVE */
+  .dato-key { display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-bottom: 10px; }
+  .dato-key .dk-icon { font-size: 20px; }
+  .dato-key .dk-text { font-size: 12.5px; color: #334155; line-height: 1.6; }
+  .dato-key .dk-text strong { color: #1e3a5f; }
+
+
+  /* ===== RESPONSIVE MÓVIL ===== */
+  @media (max-width: 768px) {
+    body { padding: 12px; }
+    .header h1 { font-size: 18px; }
+    .header p { font-size: 11px; }
+    .section-title { font-size: 15px; margin: 20px 0 12px 0; }
+    .analysis-grid { grid-template-columns: 1fr !important; gap: 12px; }
+    .charts-grid { grid-template-columns: 1fr !important; gap: 12px; }
+    .chart-card.full { grid-column: 1 !important; }
+    canvas { max-height: 220px !important; }
+    .kpi-grid, .kpi-row { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+    .verdicts-grid, .v-grid { grid-template-columns: 1fr !important; }
+    .comp-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .comp-table { font-size: 11px; min-width: 500px; }
+    .comp-table thead th, .comp-table tbody td { padding: 8px 10px; }
+    .highlight-boxes { flex-direction: column !important; }
+    .highlight-box { width: 100% !important; box-sizing: border-box; }
+    .conclusiones { padding: 16px; }
+    .chart-card { padding: 14px; }
+    .analysis-card { padding: 14px; }
+    .fuente { font-size: 11px !important; }
+  }
+  /* ===== TABLET ===== */
+  @media (max-width: 1024px) and (min-width: 769px) {
+    body { padding: 16px; }
+    .analysis-grid { grid-template-columns: 1fr 1fr !important; }
+    .kpi-grid, .kpi-row { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+
+</style>
+</head>
+<body>
+<div class="edu-section">
+  <div class="edu-section-title">📚 Guía de indicadores: ¿Qué miden, cómo se calculan y qué los mueve?</div>
+  <div class="edu-section-sub">Antes de interpretar los datos, es fundamental entender qué representa cada indicador, cómo lo mide el DANE y cuáles son los factores que lo hacen subir o bajar.</div>
+
+  <!-- TABS -->
+  <div class="edu-tabs">
+    <div class="edu-tab active-desemp" id="tab-desemp" onclick="showEduPanel('desemp')">🔴 &nbsp; Desempleo<br><small style="font-weight:400;font-size:10px">Tasa de desocupación</small></div>
+    <div class="edu-tab" id="tab-monet" onclick="showEduPanel('monet')">🟠 &nbsp; Pobreza Monetaria<br><small style="font-weight:400;font-size:10px">Ingreso insuficiente</small></div>
+    <div class="edu-tab" id="tab-multi" onclick="showEduPanel('multi')">🟢 &nbsp; Pobreza Multidimensional<br><small style="font-weight:400;font-size:10px">Condiciones de vida</small></div>
+  </div>
+
+  <!-- PANEL DESEMPLEO -->
+  <div class="edu-panel visible" id="panel-desemp">
+    <div class="edu-panel-header">
+      <div class="edu-panel-icon">👷</div>
+      <div>
+        <h2 style="color:#6b1234">Tasa de Desocupación (Desempleo)</h2>
+        <span class="tag tag-desemp">Mercado Laboral</span>
+        <span class="tag tag-desemp">Mensual</span>
+        <span class="tag tag-desemp">Total Nacional</span>
+        <p>Mide el <strong>porcentaje de personas que quieren trabajar, están disponibles, pero no encuentran empleo</strong>. Es el indicador más visible del mercado laboral, aunque por sí solo no cuenta toda la historia: no captura a quienes se rindieron de buscar trabajo ni a quienes trabajan pocas horas pero quieren más.</p>
+      </div>
+    </div>
+
+    <div class="formula-box">
+      <div class="f-title">Fórmula del DANE</div>
+      <div class="f-eq">Tasa de Desocupación = (Desocupados ÷ Población Económicamente Activa) × 100</div>
+      <div class="f-sub">Población Económicamente Activa (PEA) = Ocupados + Desocupados · Fuente: Gran Encuesta Integrada de Hogares (GEIH)</div>
+    </div>
+
+    <div class="edu-grid3">
+      <div class="edu-box box-blue">
+        <h4>📋 ¿Quién es "desocupado" según el DANE?</h4>
+        <ul>
+          <li>Tiene <strong>más de 10 años</strong> de edad</li>
+          <li><strong>No trabajó</strong> ni una hora en la semana de referencia</li>
+          <li><strong>Buscó activamente</strong> empleo en las últimas 4 semanas</li>
+          <li>Está <strong>disponible</strong> para trabajar</li>
+        </ul>
+        <p style="margin-top:8px;font-size:11.5px;color:#666">Si alguien dejó de buscar trabajo por desánimo, <strong>no se cuenta</strong> como desocupado.</p>
+      </div>
+      <div class="edu-box box-purple">
+        <h4>📊 ¿Cómo se mide?</h4>
+        <p>El DANE aplica mensualmente la <strong>Gran Encuesta Integrada de Hogares (GEIH)</strong> a una muestra de hogares en todo el país. Pregunta a cada persona mayor de 10 años sobre su situación laboral en la semana anterior. Se publica con un rezago de ~6 semanas.</p>
+      </div>
+      <div class="edu-box box-slate">
+        <h4>⚠️ Sus limitaciones</h4>
+        <ul>
+          <li>No mide <strong>informalidad</strong> (vendedores ambulantes "ocupados")</li>
+          <li>No captura el <strong>subempleo</strong> (quieren más horas)</li>
+          <li>Ignora a los <strong>desanimados</strong> que dejaron de buscar</li>
+          <li>No dice nada sobre <strong>calidad</strong> del empleo ni salario</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="factors-grid">
+      <div class="factor-card up">
+        <h4>📈 ¿Qué hace que SUBA el desempleo?</h4>
+        <ul>
+          <li>Crisis económica o recesión (empresas quiebran o reducen personal)</li>
+          <li>Pandemia o choques externos (COVID-19 llevó la tasa al 15,9% en 2020)</li>
+          <li>Alza de tasas de interés del Banco de la República (frena inversión)</li>
+          <li>Caída de la demanda interna (menos consumo = menos producción = menos empleo)</li>
+          <li>Automatización o cambios tecnológicos que reemplazan trabajo manual</li>
+          <li>Incertidumbre regulatoria o política que desincentiva la contratación</li>
+          <li>Entrada masiva de migrantes al mercado laboral en corto tiempo</li>
+        </ul>
+      </div>
+      <div class="factor-card down">
+        <h4>📉 ¿Qué hace que BAJE el desempleo?</h4>
+        <ul>
+          <li>Crecimiento económico sostenido (más producción = más empleo)</li>
+          <li>Inversión extranjera directa (IED) que genera nuevos puestos</li>
+          <li>Programas públicos de empleo o subsidios a la nómina</li>
+          <li>Formalización laboral y reducción de costos de contratación</li>
+          <li>Expansión del sector servicios y economía digital</li>
+          <li>Estabilidad macroeconómica que da confianza a empresas</li>
+          <li>Reducción de tasas de interés (más crédito = más inversión = más empleo)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="edu-grid2">
+      <div class="dato-key"><span class="dk-icon">🎯</span><span class="dk-text"><strong>Dato clave Colombia:</strong> Una tasa de desempleo de un solo dígito (menos del 10%) se considera históricamente baja para Colombia. El mínimo histórico fue 8,9% en 2015.</span></div>
+      <div class="dato-key"><span class="dk-icon">🌎</span><span class="dk-text"><strong>Referencia regional:</strong> Colombia tiene históricamente una de las tasas de desempleo más altas de Latinoamérica. El promedio regional ronda el 6–7%, lo que muestra que el mercado laboral colombiano tiene retos estructurales importantes.</span></div>
+    </div>
+  </div>
+
+  <!-- PANEL POBREZA MONETARIA -->
+  <div class="edu-panel" id="panel-monet">
+    <div class="edu-panel-header">
+      <div class="edu-panel-icon">💸</div>
+      <div>
+        <h2 style="color:#ea580c">Pobreza Monetaria</h2>
+        <span class="tag tag-monet">Ingresos</span>
+        <span class="tag tag-monet">Anual</span>
+        <span class="tag tag-monet">Encuesta de Hogares</span>
+        <p>Mide el <strong>porcentaje de personas cuyos ingresos mensuales están por debajo de una línea mínima</strong> definida como el costo de una canasta básica de bienes y servicios. Es la medida más intuitiva de pobreza: ¿tiene el hogar suficiente dinero para cubrir sus necesidades básicas?</p>
+      </div>
+    </div>
+
+    <div class="formula-box">
+      <div class="f-title">Fórmula del DANE</div>
+      <div class="f-eq">Incidencia = (Personas con ingreso per cápita &lt; Línea de Pobreza) ÷ Población Total × 100</div>
+      <div class="f-sub">Línea de Pobreza 2024: $460.198/persona/mes · Pobreza Extrema: $206.061/persona/mes · Fuente: GEIH + ENPH</div>
+    </div>
+
+    <div class="edu-grid3">
+      <div class="edu-box box-yellow">
+        <h4>💰 ¿Qué es la "línea de pobreza"?</h4>
+        <p>Es el ingreso mínimo mensual por persona para adquirir la canasta básica de bienes y servicios. Si el ingreso total del hogar dividido por el número de personas queda por debajo de esta línea, <strong>todos en ese hogar son clasificados como pobres</strong>. En 2024, esa línea es de $460.198 por persona al mes.</p>
+      </div>
+      <div class="edu-box box-purple">
+        <h4>📊 ¿Cómo se mide?</h4>
+        <p>El DANE usa la <strong>GEIH (mensual)</strong> para capturar los ingresos de los hogares, y la actualiza con la <strong>ENPH (Encuesta Nacional de Presupuesto de los Hogares)</strong> para recalibrar la canasta. El resultado se publica anualmente con rezago de ~7 meses. El Comité de Expertos en Pobreza valida la metodología.</p>
+      </div>
+      <div class="edu-box box-red">
+        <h4>🆚 Pobreza vs. Pobreza Extrema</h4>
+        <p><strong>Pobreza monetaria:</strong> no alcanza para la canasta básica completa (alimentación + otros gastos). <br><br><strong>Pobreza monetaria extrema (indigencia):</strong> no alcanza ni siquiera para la canasta alimentaria mínima. Línea 2024: $206.061/mes por persona.</p>
+      </div>
+    </div>
+
+    <div class="factors-grid">
+      <div class="factor-card up">
+        <h4>📈 ¿Qué hace que SUBA la pobreza monetaria?</h4>
+        <ul>
+          <li>Inflación alta que encarece la canasta básica más rápido que los salarios</li>
+          <li>Desempleo masivo (sin ingreso laboral, se cae en pobreza rápidamente)</li>
+          <li>Crisis económica que reduce ventas de pequeños negocios informales</li>
+          <li>Choques externos: pandemia, desastres naturales, cierre de fronteras</li>
+          <li>Reducción de transferencias sociales del Estado</li>
+          <li>Devaluación fuerte del peso (encarece productos importados básicos)</li>
+          <li>Costos de energía o alimentos que disparan el gasto del hogar</li>
+        </ul>
+      </div>
+      <div class="factor-card down">
+        <h4>📉 ¿Qué hace que BAJE la pobreza monetaria?</h4>
+        <ul>
+          <li>Crecimiento económico que genera empleo y eleva ingresos</li>
+          <li>Transferencias monetarias directas (subsidios, bonos, Familias en Acción)</li>
+          <li>Aumento del salario mínimo real (por encima de la inflación)</li>
+          <li>Formalización del empleo (más ingresos estables y predecibles)</li>
+          <li>Inflación baja o controlada (el ingreso "alcanza más")</li>
+          <li>Acceso a crédito para microempresarios y vendedores informales</li>
+          <li>Reducción del desempleo en los hogares más vulnerables</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="edu-grid2">
+      <div class="dato-key"><span class="dk-icon">⚠️</span><span class="dk-text"><strong>La trampa inflacionaria:</strong> Si los precios suben 47% (como pasó 2019–2024) pero los ingresos suben menos, la pobreza real empeora aunque el porcentaje mejore. El % puede bajar mientras más gente vive al límite.</span></div>
+      <div class="dato-key"><span class="dk-icon">📌</span><span class="dk-text"><strong>¿Por qué se mide anualmente?</strong> Los ingresos de los hogares son muy volátiles mes a mes. El DANE necesita un año completo de encuestas para tener una estimación confiable y representativa a nivel nacional y departamental.</span></div>
+    </div>
+  </div>
+
+  <!-- PANEL POBREZA MULTIDIMENSIONAL -->
+  <div class="edu-panel" id="panel-multi">
+    <div class="edu-panel-header">
+      <div class="edu-panel-icon">🏠</div>
+      <div>
+        <h2 style="color:#16a34a">Pobreza Multidimensional (IPM)</h2>
+        <span class="tag tag-multi">Condiciones de vida</span>
+        <span class="tag tag-multi">Anual</span>
+        <span class="tag tag-multi">5 dimensiones · 15 variables</span>
+        <p>Va <strong>más allá del dinero</strong>. Mide si los hogares tienen privaciones en dimensiones clave del bienestar humano: educación, salud, trabajo, condiciones de la vivienda y acceso a servicios. Una persona es "pobre multidimensional" si sufre privaciones en suficientes variables como para superar un umbral. <strong>Es posible tener ingreso suficiente pero ser pobre multidimensional</strong> (y viceversa).</p>
+      </div>
+    </div>
+
+    <div class="formula-box">
+      <div class="f-title">Índice de Pobreza Multidimensional (IPM) — Metodología Alkire-Foster adaptada por el DANE</div>
+      <div class="f-eq">Una persona es pobre multidimensional si tiene privación en variables que sumen ≥ 33% del peso total</div>
+      <div class="f-sub">Se evalúan 15 variables agrupadas en 5 dimensiones · Cada variable tiene un peso específico · Fuente: Encuesta de Calidad de Vida (ECV)</div>
+    </div>
+
+    <p style="font-size:13px;font-weight:700;color:#15803d;margin-bottom:12px">Las 5 dimensiones y sus variables:</p>
+    <div class="dim-grid">
+      <div class="dim-card">
+        <div class="dim-icon">🎓</div>
+        <div class="dim-name">EDUCACIÓN</div>
+        <div class="dim-vars">• Logro educativo<br>• Analfabetismo<br>• Asistencia escolar<br>• Rezago escolar</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-icon">🏥</div>
+        <div class="dim-name">SALUD</div>
+        <div class="dim-vars">• Sin aseguramiento en salud<br>• Barreras de acceso<br>al servicio de salud</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-icon">💼</div>
+        <div class="dim-name">TRABAJO</div>
+        <div class="dim-vars">• Empleo informal<br>• Desempleo de larga<br>duración</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-icon">🏠</div>
+        <div class="dim-name">VIVIENDA</div>
+        <div class="dim-vars">• Material pisos<br>• Material paredes<br>• Hacinamiento crítico</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-icon">💧</div>
+        <div class="dim-name">SERVICIOS</div>
+        <div class="dim-vars">• Sin acueducto<br>• Sin saneamiento<br>• Sin recolección basura</div>
+      </div>
+    </div>
+
+    <div class="factors-grid">
+      <div class="factor-card up">
+        <h4>📈 ¿Qué hace que SUBA la pobreza multidimensional?</h4>
+        <ul>
+          <li>Recortes al gasto en salud pública y educación</li>
+          <li>Deterioro de la cobertura de servicios básicos en zonas rurales</li>
+          <li>Aumento del hacinamiento por migración masiva a ciudades</li>
+          <li>Crisis que lleva a la informalidad laboral masiva</li>
+          <li>Desplazamiento forzado que rompe acceso a servicios</li>
+          <li>Abandono escolar por trabajo infantil o violencia</li>
+          <li>Pandemia que cerró escuelas y bloqueó acceso a salud</li>
+        </ul>
+      </div>
+      <div class="factor-card down">
+        <h4>📉 ¿Qué hace que BAJE la pobreza multidimensional?</h4>
+        <ul>
+          <li>Expansión de cobertura en salud (más afiliados al sistema)</li>
+          <li>Construcción de acueductos y alcantarillado en zonas rurales</li>
+          <li>Programas de mejoramiento de vivienda (pisos y techos dignos)</li>
+          <li>Mayor cobertura educativa y reducción del analfabetismo</li>
+          <li>Formalización laboral (de informal a formal = sale de privación)</li>
+          <li>Electrificación rural y conexión a internet</li>
+          <li>Transferencias condicionadas (Familias en Acción, Colombia Mayor)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="edu-grid3">
+      <div class="dato-key"><span class="dk-icon">💡</span><span class="dk-text"><strong>¿Por qué es diferente a la monetaria?</strong> Alguien puede tener ingresos sobre la línea de pobreza pero vivir en casa de bahareque sin agua potable. El IPM capta esa realidad que el dinero no ve.</span></div>
+      <div class="dato-key"><span class="dk-icon">📡</span><span class="dk-text"><strong>¿Cómo se mide?</strong> Encuesta de Calidad de Vida (ECV), aplicada anualmente por el DANE. Visita hogares y verifica físicamente condiciones de vivienda, documentos de salud y registros de educación.</span></div>
+      <div class="dato-key"><span class="dk-icon">🌿</span><span class="dk-text"><strong>Responde más al gasto social:</strong> A diferencia de la monetaria, este indicador mejora cuando el Estado invierte en infraestructura y servicios, incluso si la economía crece poco.</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="header">
+  <h1>📊 Indicadores Sociales de Colombia — Análisis Fundamental</h1>
+  <p>Datos extraídos del portal oficial del DANE · Actualización: Abril 2026</p>
+  <span class="badge">⚖️ Gobierno Gustavo Petro · Agosto 2022 – Presente</span>
+</div>
+
+<!-- KPIs -->
+<div class="section-title">📌 Estado actual de los indicadores (últimos datos disponibles)</div>
+<div class="analysis-grid">
+  <div class="analysis-card desempleo">
+    <h3>🔴 Desempleo (Desocupación)</h3>
+    <div class="kpi desempleo">9,2%</div>
+    <div class="kpi-label">Tasa de desocupación · Febrero 2026 · Total nacional</div>
+    <span class="delta mejora">▼ -1,1 pp vs feb 2025</span>
+    <p>La tasa bajó 1,1 puntos porcentuales frente al mismo mes del año anterior (10,3%). Sin embargo, <strong>sigue por encima del mínimo histórico de 8,9%</strong> registrado en 2015. La tasa de ocupación se ubica en 58,7%.</p>
+  </div>
+  <div class="analysis-card monetaria">
+    <h3>🟠 Pobreza Monetaria</h3>
+    <div class="kpi monetaria">32,7%</div>
+    <div class="kpi-label">Incidencia nacional · Año 2024 · Último dato anual</div>
+    <span class="delta neutral">→ Sin variación vs 2023</span>
+    <p>En 2024, <strong>1 de cada 3 colombianos</strong> no alcanzaba el ingreso mínimo para cubrir la canasta básica ($460.198/mes). El dato se estancó respecto a 2023 (33,0%), señal de <strong>lentitud en la recuperación post-pandemia</strong>.</p>
+  </div>
+  <div class="analysis-card multi">
+    <h3>🟢 Pobreza Multidimensional</h3>
+    <div class="kpi multi">9,9%</div>
+    <div class="kpi-label">Incidencia nacional · Año 2025 · Publicado 14/04/2026</div>
+    <span class="delta mejora">▼ -1,6 pp vs 2024 (11,5%)</span>
+    <p>El indicador más positivo del periodo. Bajó 1,6 puntos y está en su <strong>mínimo histórico desde que se mide</strong> (2012). Refleja mejoras en acceso a salud, educación, servicios públicos y vivienda.</p>
+  </div>
+</div>
+
+<!-- CONTEXTO POLÍTICO -->
+<div class="section-title">🏛️ Contexto: Gobierno Petro y los datos sociales</div>
+<div class="context-grid">
+  <div class="context-card">
+    <h3>📅 Cronología política y los indicadores</h3>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="year">2020 — Pico pandemia (Duque)</div>
+        <div class="desc">Desempleo: 15,9% · Pobreza monetaria: 42,5% · Pobreza multidimensional: 18,1%. El mayor choque social en décadas.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="year">2021–2022 — Recuperación (Duque)</div>
+        <div class="desc">Rebote económico fuerte. Desempleo bajó a 11,2% (2022). Pobreza monetaria cayó a 36,6%. Petro recibe una economía en recuperación activa.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="year">Agosto 2022 — Inicio gobierno Petro</div>
+        <div class="desc">El contexto de partida era: desempleo ~11%, pobreza monetaria ~37%, inflación desbocada (+13% en 2022). Herencia de post-pandemia complicada.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="year">2023 — Primer año completo Petro</div>
+        <div class="desc">Desempleo: 10,2% (baja). Pobreza monetaria: 33,0% (mejora de 3,6 pp). Pobreza multidimensional: 13,3% (mejora de 0,4 pp).</div>
+      </div>
+      <div class="timeline-item">
+        <div class="year">2024–2025 — Consolidación</div>
+        <div class="desc">Pobreza multidimensional llega al mínimo histórico de 9,9% (2025). Desempleo a 9,2% en feb/2026. Pobreza monetaria se estanca en ~32,7%.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="context-card">
+    <h3>🔍 ¿Qué explica cada tendencia?</h3>
+    <div class="highlight-box green">
+      <strong>✅ Pobreza Multidimensional (la mejor noticia)</strong><br>
+      La caída al 9,9% en 2025 se explica principalmente por la expansión de la cobertura en salud (reforma progresiva), programas de transferencias como Colombia Mayor y Familias en Acción, y mejora en acceso a servicios públicos en zonas rurales. Este indicador responde más a gasto social que al ciclo económico.
+    </div>
+    <div class="highlight-box" style="margin-top:10px;">
+      <strong>⚠️ Pobreza Monetaria (la señal de alerta)</strong><br>
+      El estancamiento en ~32,7% en 2024 (sin avance) es preocupante. La inflación acumulada del periodo Petro erosionó el ingreso real de los hogares más pobres. La línea de pobreza subió un 5,7% en 2024, lo que significa que los ingresos no mejoran al ritmo del costo de vida.
+    </div>
+    <div class="highlight-box blue" style="margin-top:10px;">
+      <strong>📉 Desempleo (mejoría moderada)</strong><br>
+      La reducción del desempleo a 9,2% (feb/2026) es positiva, pero el empleo creado es en gran parte informal. El RELAB muestra que el empleo dependiente (formal) crece apenas 2,2%, mientras que el independiente (informal) crece 8,3%. Eso significa más trabajadores pero con menor protección.
+    </div>
+  </div>
+</div>
+
+<!-- GRÁFICAS -->
+<div class="section-title">📈 Evolución histórica con contexto de gobierno</div>
+<div class="charts-grid">
+
+  <div class="chart-card full">
+    <h2>Tasa de Desocupación Total Nacional — Serie anual (%)</h2>
+    <div class="chart-sub">La línea amarilla indica el inicio del Gobierno Petro (agosto 2022)</div>
+    <div class="petro-legend">🟡 Zona sombreada = Gobierno Petro (2022–presente)</div>
+    <canvas id="desempleoChart" style="display: block; box-sizing: border-box; height: 260px; width: 1372px;" width="1715" height="325"></canvas>
+  </div>
+
+  <div class="chart-card">
+    <h2>Pobreza Monetaria Nacional (%)</h2>
+    <div class="chart-sub">Serie 2012–2024 · Línea de pobreza nacional</div>
+    <canvas id="pobMonetariaChart" style="display: block; box-sizing: border-box; height: 260px; width: 656px;" width="656" height="260"></canvas>
+  </div>
+
+  <div class="chart-card">
+    <h2>Pobreza Multidimensional Nacional (%)</h2>
+    <div class="chart-sub">Serie 2012–2025 · Incluye último dato abril 2026</div>
+    <canvas id="pobMultiChart" style="display: block; box-sizing: border-box; height: 260px; width: 656px;" width="656" height="260"></canvas>
+  </div>
+
+  <div class="chart-card full">
+    <h2>Comparativo: Los 3 indicadores superpuestos (2012–2024)</h2>
+    <div class="chart-sub">Permite ver cómo se mueven juntos y dónde divergen</div>
+    <canvas id="comparativoChart" style="display: block; box-sizing: border-box; height: 260px; width: 1372px;" width="1715" height="325"></canvas>
+  </div>
+
+</div>
+
+<!-- CONCLUSIONES -->
+<div class="section-title">🧭 Conclusiones del análisis fundamental</div>
+<div class="conclusiones">
+  <div class="conclusion-item">
+    <div class="con-icon">✅</div>
+    <div class="con-text">
+      <h4>Logro destacado: Pobreza Multidimensional en mínimo histórico</h4>
+      <p>El gobierno Petro logra el mejor resultado de la historia en pobreza multidimensional (9,9% en 2025), impulsado por el gasto social en salud, educación y transferencias condicionadas. Esto indica que las condiciones de vida en términos de acceso a servicios han mejorado sostenidamente.</p>
+    </div>
+  </div>
+  <div class="conclusion-item">
+    <div class="con-icon">⚠️</div>
+    <div class="con-text">
+      <h4>Desafío pendiente: La pobreza monetaria no cede</h4>
+      <p>A pesar de los programas sociales, la pobreza monetaria se estancó en 32,7% en 2024, igual que en 2023. Esto sugiere que el ingreso real de los hogares pobres no crece suficientemente. La inflación (que fue cercana al 9–13% en el periodo 2022–2023) golpeó fuertemente el poder adquisitivo de los más vulnerables, diluyendo las transferencias monetarias.</p>
+    </div>
+  </div>
+  <div class="conclusion-item">
+    <div class="con-icon">📉</div>
+    <div class="con-text">
+      <h4>Desempleo: mejora visible pero con calidad cuestionable</h4>
+      <p>La tasa bajó desde ~11% cuando llegó Petro hasta 9,2% en febrero 2026, lo que es positivo. Sin embargo, los datos del RELAB muestran que el empleo informal crece 4 veces más rápido que el formal (8,3% vs 2,2%). Esto significa que Colombia genera ocupación, pero sin suficientes garantías laborales (salud, pensión, estabilidad).</p>
+    </div>
+  </div>
+  <div class="conclusion-item">
+    <div class="con-icon">🔄</div>
+    <div class="con-text">
+      <h4>La paradoja Petro: mejora social sin crecimiento económico robusto</h4>
+      <p>Los datos muestran una paradoja: los indicadores de condiciones de vida (pobreza multidimensional) mejoran, pero el ingreso disponible (pobreza monetaria) no avanza al mismo ritmo. Esto es coherente con un modelo que expande servicios públicos pero donde la economía privada —PIB creció apenas 2,3% en el Q4/2025— no genera suficiente riqueza para elevar los ingresos de toda la población.</p>
+    </div>
+  </div>
+  <div class="conclusion-item">
+    <div class="con-icon">📌</div>
+    <div class="con-text">
+      <h4>Lo que aún no vemos en los datos</h4>
+      <p>Los datos del DANE tienen un rezago: la pobreza monetaria más reciente es de 2024 (publicada julio 2025). El efecto de las reformas estructurales del gobierno (reforma de salud, reforma pensional, ley de tierras) aún no se refleja completamente en las estadísticas. Los próximos informes de 2025–2026 serán determinantes para evaluar el legado social del gobierno.</p>
+    </div>
+  </div>
+</div>
+
+<div class="comp-section"><div class="comp-section-title">⚖️ Comparación: Pre-pandemia (2019) vs. Situación Actual</div><div class="veredicto"><div class="v-card peor"><span class="v-stamp">PEOR</span><div class="v-icon">💸</div><div class="v-label">Pobreza Monetaria</div><div class="v-title">Estancada en 32,7%</div><div class="v-desc">En 2019 era <strong>35,7%</strong>. Hoy (2024) es <strong>32,7%</strong>. Aunque bajó en porcentaje, la <strong>línea de pobreza subió un 47%</strong> por la inflación. Salir de la pobreza es hoy mucho más difícil que antes de la pandemia.</div></div><div class="v-card mejor"><span class="v-stamp">MEJOR</span><div class="v-icon">🏠</div><div class="v-label">Pobreza Multidimensional</div><div class="v-title">−7,6 pp más baja</div><div class="v-desc">En 2019 era <strong>17,5%</strong>. En 2025 es <strong>9,9%</strong>. Una caída histórica de casi 8 puntos. Las condiciones de vida (salud, educación, vivienda, servicios) mejoraron de forma clara y sostenida.</div></div><div class="v-card mixto"><span class="v-stamp">MIXTO</span><div class="v-icon">👷</div><div class="v-label">Desempleo</div><div class="v-title">−1,3 pp más bajo</div><div class="v-desc">En 2019 fue <strong>10,5%</strong>. En feb/2026 es <strong>9,2%</strong>. Levemente mejor en cifras, pero la informalidad laboral crece 4 veces más rápido que el empleo formal.</div></div></div><div class="comp-table-wrap"><table class="comp-table"><thead><tr><th style="width:26%;text-align:left">Indicador</th><th class="col-pre">🗓️ Pre-pandemia<br><small>2019</small></th><th style="background:#374151;color:white">🦠 Peor momento<br><small>2020</small></th><th class="col-actual">📍 Hoy<br><small>2024–2026</small></th><th class="col-delta">📊 Vs. 2019</th><th>Veredicto</th></tr></thead><tbody><tr class="cat-header"><td colspan="6">MERCADO LABORAL</td></tr><tr><td>Tasa de desocupación</td><td class="col-pre">10,5%</td><td style="background:#fef2f2;color:#b91c1c;font-weight:700">15,9%</td><td class="col-actual">9,2% (feb 2026)</td><td class="col-delta delta-pos">▼ −1,3 pp</td><td><span class="pill green">✅ Mejor</span></td></tr><tr><td>Tasa de ocupación</td><td class="col-pre">~57,0%</td><td style="background:#fef2f2;color:#b91c1c;font-weight:700">~49,8%</td><td class="col-actual">58,7% (feb 2026)</td><td class="col-delta delta-pos">▲ +1,7 pp</td><td><span class="pill green">✅ Mejor</span></td></tr><tr><td>Crecimiento empleo informal</td><td class="col-pre">Referencia</td><td style="background:#fef2f2">—</td><td class="col-actual">+8,3% anual</td><td class="col-delta delta-neg">▲ Alta informalidad</td><td><span class="pill yellow">⚠️ Alerta</span></td></tr><tr class="cat-header"><td colspan="6">POBREZA</td></tr><tr><td>Pobreza monetaria nacional</td><td class="col-pre">35,7%</td><td style="background:#fef2f2;color:#b91c1c;font-weight:700">42,5%</td><td class="col-actual">32,7% (2024)</td><td class="col-delta delta-pos">▼ −3,0 pp</td><td><span class="pill yellow">⚠️ Mixto</span></td></tr><tr><td>Pobreza monetaria extrema</td><td class="col-pre">~9,6%</td><td style="background:#fef2f2;color:#b91c1c;font-weight:700">~15,1%</td><td class="col-actual">~10,9% (est. 2024)</td><td class="col-delta delta-neg">▲ +1,3 pp</td><td><span class="pill red">❌ Peor</span></td></tr><tr><td>Línea de pobreza ($/mes)</td><td class="col-pre">~$312.000</td><td style="background:#fef2f2">—</td><td class="col-actual">$460.198 (2024)</td><td class="col-delta delta-neg">▲ +47,5%</td><td><span class="pill red">❌ Inflación erosió</span></td></tr><tr><td>Pobreza multidimensional</td><td class="col-pre">17,5%</td><td style="background:#fef2f2;color:#b91c1c;font-weight:700">18,1%</td><td class="col-actual">9,9% (2025)</td><td class="col-delta delta-pos">▼ −7,6 pp</td><td><span class="pill green">✅ Mucho mejor</span></td></tr><tr class="cat-header"><td colspan="6">ECONOMÍA GENERAL</td></tr><tr><td>Crecimiento PIB anual</td><td class="col-pre">+3,3% (2019)</td><td style="background:#fef2f2;color:#b91c1c;font-weight:700">−6,8% (2020)</td><td class="col-actual">+2,3% (Q4/2025)</td><td class="col-delta delta-neg">▼ −1,0 pp</td><td><span class="pill yellow">⚠️ Más lento</span></td></tr></tbody></table></div><div class="comp-chart-grid"><div class="comp-chart-card"><h2>Comparación directa: 2019 vs. Actualidad</h2><div class="csub">Barras agrupadas — pre-pandemia vs. hoy</div><canvas id="barCompChart" style="display: block; box-sizing: border-box; height: 240px; width: 608px;" width="760" height="300"></canvas></div><div class="comp-chart-card"><h2>Índice de recuperación (base 100 = 2019)</h2><div class="csub">¿Cómo se compara cada indicador vs. pre-pandemia?</div><canvas id="recoveryChart" style="display: block; box-sizing: border-box; height: 240px; width: 608px;" width="760" height="300"></canvas></div><div class="comp-chart-card full"><h2>Brecha entre pobreza monetaria y multidimensional (2012–2025)</h2><div class="csub">La distancia entre ambas líneas: qué tipo de pobreza avanza o retrocede</div><canvas id="brechaChart" style="display: block; box-sizing: border-box; height: 240px; width: 1276px;" width="1595" height="300"></canvas></div></div><div class="semaforo"><div class="sem-card"><h3>🔴 Desempleo — ¿Mejor o peor?</h3><div class="sem-row"><span class="sem-label">2019 (pre-pandemia)</span><span class="sem-val">10,5% <span class="sem-ico">🟡</span></span></div><div class="sem-row"><span class="sem-label">2020 (peor momento)</span><span class="sem-val">15,9% <span class="sem-ico">🔴</span></span></div><div class="sem-row"><span class="sem-label">2022 (llegó Petro)</span><span class="sem-val">11,2% <span class="sem-ico">🟡</span></span></div><div class="sem-row"><span class="sem-label">Feb 2026 (hoy)</span><span class="sem-val" style="color:#16a34a">9,2% <span class="sem-ico">🟢</span></span></div><div style="font-size:11px;color:#555;margin-top:10px;background:#f0fdf4;padding:8px;border-radius:6px"><strong>Conclusión:</strong> Mejor en cifra bruta, pero la informalidad laboral es la asignatura pendiente.</div></div><div class="sem-card"><h3>🟠 Pobreza Monetaria — ¿Mejor o peor?</h3><div class="sem-row"><span class="sem-label">2017 (mínimo histórico)</span><span class="sem-val" style="color:#16a34a">26,9% <span class="sem-ico">🟢</span></span></div><div class="sem-row"><span class="sem-label">2019 (pre-pandemia)</span><span class="sem-val">35,7% <span class="sem-ico">🟡</span></span></div><div class="sem-row"><span class="sem-label">2020 (peor momento)</span><span class="sem-val">42,5% <span class="sem-ico">🔴</span></span></div><div class="sem-row"><span class="sem-label">2024 (hoy)</span><span class="sem-val" style="color:#d97706">32,7% <span class="sem-ico">🟡</span></span></div><div style="font-size:11px;color:#555;margin-top:10px;background:#fffbeb;padding:8px;border-radius:6px"><strong>Conclusión:</strong> Mejor en %, pero la inflación acumulada hace que el umbral sea 47% más alto. El reto real es mayor.</div></div><div class="sem-card"><h3>🟢 Pobreza Multidimensional — ¿Mejor o peor?</h3><div class="sem-row"><span class="sem-label">2019 (pre-pandemia)</span><span class="sem-val">17,5% <span class="sem-ico">🟡</span></span></div><div class="sem-row"><span class="sem-label">2020 (pandemia)</span><span class="sem-val">18,1% <span class="sem-ico">🔴</span></span></div><div class="sem-row"><span class="sem-label">2022 (llegó Petro)</span><span class="sem-val">12,9% <span class="sem-ico">🟡</span></span></div><div class="sem-row"><span class="sem-label">2025 (hoy)</span><span class="sem-val" style="color:#16a34a">9,9% <span class="sem-ico">🟢</span></span></div><div style="font-size:11px;color:#555;margin-top:10px;background:#f0fdf4;padding:8px;border-radius:6px"><strong>Conclusión:</strong> Claramente mejor. Mínimo histórico, bajando 7,6 pp desde 2019.</div></div></div><div class="comp-conclusion"><h3>🎯 Veredicto final: ¿Colombia está mejor o peor que antes de la pandemia?</h3><div class="cc-grid"><div class="cc-item"><h4>✅ Donde sí estamos mejor</h4><p>La <strong>pobreza multidimensional</strong> cayó casi 8 puntos desde 2019 al mínimo histórico de 9,9%: más colombianos acceden hoy a salud, educación, agua potable y vivienda digna. El <strong>desempleo</strong> es numéricamente menor (9,2% vs 10,5%). La recuperación post-pandemia fue real y los programas sociales han tenido impacto medible en condiciones de vida.</p></div><div class="cc-item"><h4>⚠️ Donde NO hemos recuperado terreno</h4><p>La <strong>pobreza monetaria extrema</strong> todavía supera los niveles de 2019. La <strong>inflación acumulada</strong> del período 2021–2024 hizo que la línea de pobreza subiera un 47%, lo que significa que aunque el porcentaje bajó, el costo real de salir de la pobreza es mucho más alto. El <strong>PIB crece más lento</strong> (2,3%) que antes de la pandemia (3,3%).</p></div><div class="cc-item"><h4>🔍 La trampa estadística</h4><p>Los porcentajes de pobreza monetaria (32,7% hoy vs 35,7% en 2019) parecen mostrar mejora. Pero la <strong>línea de pobreza subió de ~$312.000 a $460.198/mes</strong>. Eso significa que el umbral para “no ser pobre” es casi un 50% más alto hoy. El verdadero reto es que los ingresos no han crecido al mismo ritmo que los precios.</p></div><div class="cc-item"><h4>📌 La lectura política</h4><p>El gobierno Petro <strong>heredó una economía en rebote post-pandemia</strong>. Los indicadores de acceso a servicios mejoran con gasto social directo. Pero la <strong>inflación estructural y el bajo crecimiento económico</strong> limitaron las ganancias reales en ingresos de los hogares. Balance social: mejor en calidad de vida, estancado en ingreso real.</p></div></div><div class="verdict-banner"><span>⚖️</span><strong>BALANCE GENERAL: MIXTO CON TENDENCIA POSITIVA EN LO SOCIAL</strong><br>Colombia está mejor en condiciones de vida (pobreza multidimensional en mínimo histórico) pero aún no ha superado la cicatriz económica de la pandemia en términos de ingreso real y pobreza extrema.</div></div></div><div class="source">Fuente: DANE — dane.gov.co · Gran Encuesta Integrada de Hogares (GEIH) · ECV · Pobreza y Desigualdad · Análisis: Abril 2026</div>
+
+<script>
+Chart.register(window['chartjs-plugin-annotation']);
+
+const yearsAll = [2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024];
+const colorPetro = 'rgba(253, 224, 71, 0.18)';
+
+const petroAnnotation = {
+  type: 'box',
+  xMin: '2022',
+  xMax: '2024',
+  backgroundColor: colorPetro,
+  borderColor: 'rgba(234,179,8,0.5)',
+  borderWidth: 1,
+  label: { content: 'Gobierno Petro', display: true, position: 'start', color: '#92400e', font: { size: 11 } }
+};
+
+const baseOptions = (extra={}) => ({
+  responsive: true,
+  plugins: {
+    legend: { position: 'top', labels: { font: { size: 11 } } },
+    tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y + '%' } },
+    annotation: { annotations: { petroBox: {...petroAnnotation, ...extra} } }
+  },
+  scales: { y: { beginAtZero: false, ticks: { callback: v => v + '%', font: { size: 11 } }, grid: { color: '#f1f5f9' } }, x: { ticks: { font: { size: 11 } }, grid: { display: false } } }
+});
+
+// DESEMPLEO
+new Chart(document.getElementById('desempleoChart'), {
+  type: 'bar',
+  data: {
+    labels: yearsAll,
+    datasets: [{
+      label: 'Tasa de Desocupación (%)',
+      data: [10.4,9.6,9.1,8.9,9.2,9.4,9.7,10.5,15.9,13.7,11.2,10.2,9.6],
+      backgroundColor: yearsAll.map(y => y === 2020 ? 'rgba(220,38,38,0.75)' : y >= 2022 ? 'rgba(107,18,52,0.85)' : 'rgba(107,18,52,0.45)'),
+      borderColor: yearsAll.map(y => y >= 2022 ? 'rgb(107,18,52)' : 'rgba(107,18,52,0.5)'),
+      borderWidth: 1,
+      borderRadius: 5
+    }]
+  },
+  options: baseOptions()
+});
+
+// POBREZA MONETARIA
+new Chart(document.getElementById('pobMonetariaChart'), {
+  type: 'line',
+  data: {
+    labels: yearsAll,
+    datasets: [{
+      label: 'Pobreza Monetaria (%)',
+      data: [32.7,30.6,28.5,27.8,28.0,26.9,27.0,35.7,42.5,39.3,36.6,33.0,32.7],
+      borderColor: 'rgb(234,88,12)',
+      backgroundColor: 'rgba(234,88,12,0.12)',
+      fill: true, tension: 0.4, pointRadius: 5,
+      pointBackgroundColor: yearsAll.map(y => y >= 2022 ? 'rgb(234,88,12)' : 'rgba(234,88,12,0.5)'),
+      pointRadius: yearsAll.map(y => y >= 2022 ? 7 : 4)
+    }]
+  },
+  options: baseOptions()
+});
+
+// POBREZA MULTIDIMENSIONAL
+const yearsMulti = [2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+const petroAnnoMulti = { ...petroAnnotation, xMin: '2022', xMax: '2025' };
+new Chart(document.getElementById('pobMultiChart'), {
+  type: 'line',
+  data: {
+    labels: yearsMulti,
+    datasets: [{
+      label: 'Pobreza Multidimensional (%)',
+      data: [27.0,24.8,21.9,20.2,17.8,17.0,19.6,17.5,18.1,16.0,12.9,13.3,11.5,9.9],
+      borderColor: 'rgb(22,163,74)',
+      backgroundColor: 'rgba(22,163,74,0.12)',
+      fill: true, tension: 0.4,
+      pointBackgroundColor: yearsMulti.map(y => y >= 2022 ? 'rgb(22,163,74)' : 'rgba(22,163,74,0.5)'),
+      pointRadius: yearsMulti.map(y => y >= 2022 ? 7 : 4)
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top', labels: { font: { size: 11 } } },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y + '%' } },
+      annotation: { annotations: { petroBox: petroAnnoMulti } }
+    },
+    scales: { y: { beginAtZero: false, ticks: { callback: v => v + '%', font: { size: 11 } }, grid: { color: '#f1f5f9' } }, x: { ticks: { font: { size: 11 } }, grid: { display: false } } }
+  }
+});
+
+// COMPARATIVO
+new Chart(document.getElementById('comparativoChart'), {
+  type: 'line',
+  data: {
+    labels: yearsAll,
+    datasets: [
+      { label: 'Desempleo (%)', data: [10.4,9.6,9.1,8.9,9.2,9.4,9.7,10.5,15.9,13.7,11.2,10.2,9.6], borderColor:'rgb(107,18,52)', tension:0.4, fill:false, pointRadius:4, borderWidth:2 },
+      { label: 'Pobreza Monetaria (%)', data: [32.7,30.6,28.5,27.8,28.0,26.9,27.0,35.7,42.5,39.3,36.6,33.0,32.7], borderColor:'rgb(234,88,12)', tension:0.4, fill:false, pointRadius:4, borderWidth:2 },
+      { label: 'Pobreza Multidimensional (%)', data: [27.0,24.8,21.9,20.2,17.8,17.0,19.6,17.5,18.1,16.0,12.9,13.3,11.5], borderColor:'rgb(22,163,74)', tension:0.4, fill:false, pointRadius:4, borderWidth:2 }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top', labels: { font: { size: 11 } } },
+      tooltip: { mode: 'index', intersect: false },
+      annotation: { annotations: { petroBox: petroAnnotation } }
+    },
+    scales: { y: { beginAtZero: false, ticks: { callback: v => v + '%', font: { size: 11 } }, grid: { color: '#f1f5f9' } }, x: { ticks: { font: { size: 11 } }, grid: { display: false } } }
+  }
+});
+</script>
+
+<div id="claude-agent-glow-border" style="position: fixed; inset: 0px; pointer-events: none; z-index: 2147483646; opacity: 1; transition: opacity 0.3s ease-in-out; animation: 2s ease-in-out 0s infinite normal none running claude-pulse; box-shadow: rgba(217, 119, 87, 0.5) 0px 0px 10px inset, rgba(217, 119, 87, 0.3) 0px 0px 20px inset, rgba(217, 119, 87, 0.1) 0px 0px 30px inset;"></div><div id="claude-agent-stop-container" style="position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); justify-content: center; align-items: center; pointer-events: none; z-index: 2147483647;"><button id="claude-agent-stop-button" style="position: relative; transform: translateY(0px); padding: 12px 16px; background: rgb(250, 249, 245); color: rgb(20, 20, 19); border: 0.5px solid rgba(31, 30, 29, 0.4); border-radius: 12px; font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; box-shadow: rgba(217, 119, 87, 0.24) 0px 40px 80px, rgba(217, 119, 87, 0.24) 0px 4px 14px; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; user-select: none; pointer-events: auto; white-space: nowrap; margin: 0px auto;">
+      <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" style="margin-right: 12px; vertical-align: middle;">
+        <path d="M128,20A108,108,0,1,0,236,128,108.12,108.12,0,0,0,128,20Zm0,192a84,84,0,1,1,84-84A84.09,84.09,0,0,1,128,212Zm40-112v56a12,12,0,0,1-12,12H100a12,12,0,0,1-12-12V100a12,12,0,0,1,12-12h56A12,12,0,0,1,168,100Z"></path>
+      </svg>
+      <span style="vertical-align: middle;">Stop Claude</span>
+    </button></div>
+<script>
+
+Chart.register(window['chartjs-plugin-annotation']);
+
+const yearsAll = [2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024];
+const colorPetro = 'rgba(253, 224, 71, 0.18)';
+
+const petroAnnotation = {
+  type: 'box',
+  xMin: '2022',
+  xMax: '2024',
+  backgroundColor: colorPetro,
+  borderColor: 'rgba(234,179,8,0.5)',
+  borderWidth: 1,
+  label: { content: 'Gobierno Petro', display: true, position: 'start', color: '#92400e', font: { size: 11 } }
+};
+
+const baseOptions = (extra={}) => ({
+  responsive: true,
+  plugins: {
+    legend: { position: 'top', labels: { font: { size: 11 } } },
+    tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y + '%' } },
+    annotation: { annotations: { petroBox: {...petroAnnotation, ...extra} } }
+  },
+  scales: { y: { beginAtZero: false, ticks: { callback: v => v + '%', font: { size: 11 } }, grid: { color: '#f1f5f9' } }, x: { ticks: { font: { size: 11 } }, grid: { display: false } } }
+});
+
+// DESEMPLEO
+new Chart(document.getElementById('desempleoChart'), {
+  type: 'bar',
+  data: {
+    labels: yearsAll,
+    datasets: [{
+      label: 'Tasa de Desocupación (%)',
+      data: [10.4,9.6,9.1,8.9,9.2,9.4,9.7,10.5,15.9,13.7,11.2,10.2,9.6],
+      backgroundColor: yearsAll.map(y => y === 2020 ? 'rgba(220,38,38,0.75)' : y >= 2022 ? 'rgba(107,18,52,0.85)' : 'rgba(107,18,52,0.45)'),
+      borderColor: yearsAll.map(y => y >= 2022 ? 'rgb(107,18,52)' : 'rgba(107,18,52,0.5)'),
+      borderWidth: 1,
+      borderRadius: 5
+    }]
+  },
+  options: baseOptions()
+});
+
+// POBREZA MONETARIA
+new Chart(document.getElementById('pobMonetariaChart'), {
+  type: 'line',
+  data: {
+    labels: yearsAll,
+    datasets: [{
+      label: 'Pobreza Monetaria (%)',
+      data: [32.7,30.6,28.5,27.8,28.0,26.9,27.0,35.7,42.5,39.3,36.6,33.0,32.7],
+      borderColor: 'rgb(234,88,12)',
+      backgroundColor: 'rgba(234,88,12,0.12)',
+      fill: true, tension: 0.4, pointRadius: 5,
+      pointBackgroundColor: yearsAll.map(y => y >= 2022 ? 'rgb(234,88,12)' : 'rgba(234,88,12,0.5)'),
+      pointRadius: yearsAll.map(y => y >= 2022 ? 7 : 4)
+    }]
+  },
+  options: baseOptions()
+});
+
+// POBREZA MULTIDIMENSIONAL
+const yearsMulti = [2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+const petroAnnoMulti = { ...petroAnnotation, xMin: '2022', xMax: '2025' };
+new Chart(document.getElementById('pobMultiChart'), {
+  type: 'line',
+  data: {
+    labels: yearsMulti,
+    datasets: [{
+      label: 'Pobreza Multidimensional (%)',
+      data: [27.0,24.8,21.9,20.2,17.8,17.0,19.6,17.5,18.1,16.0,12.9,13.3,11.5,9.9],
+      borderColor: 'rgb(22,163,74)',
+      backgroundColor: 'rgba(22,163,74,0.12)',
+      fill: true, tension: 0.4,
+      pointBackgroundColor: yearsMulti.map(y => y >= 2022 ? 'rgb(22,163,74)' : 'rgba(22,163,74,0.5)'),
+      pointRadius: yearsMulti.map(y => y >= 2022 ? 7 : 4)
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top', labels: { font: { size: 11 } } },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y + '%' } },
+      annotation: { annotations: { petroBox: petroAnnoMulti } }
+    },
+    scales: { y: { beginAtZero: false, ticks: { callback: v => v + '%', font: { size: 11 } }, grid: { color: '#f1f5f9' } }, x: { ticks: { font: { size: 11 } }, grid: { display: false } } }
+  }
+});
+
+// COMPARATIVO
+new Chart(document.getElementById('comparativoChart'), {
+  type: 'line',
+  data: {
+    labels: yearsAll,
+    datasets: [
+      { label: 'Desempleo (%)', data: [10.4,9.6,9.1,8.9,9.2,9.4,9.7,10.5,15.9,13.7,11.2,10.2,9.6], borderColor:'rgb(107,18,52)', tension:0.4, fill:false, pointRadius:4, borderWidth:2 },
+      { label: 'Pobreza Monetaria (%)', data: [32.7,30.6,28.5,27.8,28.0,26.9,27.0,35.7,42.5,39.3,36.6,33.0,32.7], borderColor:'rgb(234,88,12)', tension:0.4, fill:false, pointRadius:4, borderWidth:2 },
+      { label: 'Pobreza Multidimensional (%)', data: [27.0,24.8,21.9,20.2,17.8,17.0,19.6,17.5,18.1,16.0,12.9,13.3,11.5], borderColor:'rgb(22,163,74)', tension:0.4, fill:false, pointRadius:4, borderWidth:2 }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top', labels: { font: { size: 11 } } },
+      tooltip: { mode: 'index', intersect: false },
+      annotation: { annotations: { petroBox: petroAnnotation } }
+    },
+    scales: { y: { beginAtZero: false, ticks: { callback: v => v + '%', font: { size: 11 } }, grid: { color: '#f1f5f9' } }, x: { ticks: { font: { size: 11 } }, grid: { display: false } } }
+  }
+});
+
+window.showEduPanel = function(id) {
+  document.querySelectorAll('.edu-panel').forEach(function(p){ p.classList.remove('visible'); });
+  var tabs = { desemp: document.getElementById('tab-desemp'), monet: document.getElementById('tab-monet'), multi: document.getElementById('tab-multi') };
+  Object.values(tabs).forEach(function(t){ t.classList.remove('active-desemp','active-monet','active-multi'); });
+  document.getElementById('panel-' + id).classList.add('visible');
+  tabs[id].classList.add('active-' + id);
+};
+</script>
+</body>
+</html>
