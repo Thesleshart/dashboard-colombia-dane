@@ -172,33 +172,63 @@
   .dato-key .dk-text strong { color: #1e3a5f; }
 
 
+  
   /* ===== RESPONSIVE MÓVIL ===== */
   @media (max-width: 768px) {
-    body { padding: 12px; }
-    .header h1 { font-size: 18px; }
+    body { padding: 10px; overflow-x: hidden; }
+    .header h1 { font-size: 16px; line-height: 1.3; }
     .header p { font-size: 11px; }
-    .section-title { font-size: 15px; margin: 20px 0 12px 0; }
-    .analysis-grid { grid-template-columns: 1fr !important; gap: 12px; }
-    .charts-grid { grid-template-columns: 1fr !important; gap: 12px; }
+    .section-title { font-size: 14px; margin: 16px 0 10px 0; }
+    
+    /* Grids a 1 columna */
+    .analysis-grid { grid-template-columns: 1fr !important; gap: 10px; }
+    .charts-grid { grid-template-columns: 1fr !important; gap: 10px; }
     .chart-card.full { grid-column: 1 !important; }
-    canvas { max-height: 220px !important; }
-    .kpi-grid, .kpi-row { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+    
+    /* Canvas: dejar que Chart.js maneje el tamaño */
+    canvas { 
+      max-height: 200px !important;
+      width: 100% !important;
+      height: auto !important;
+    }
+    
+    /* KPI */
+    .kpi-grid, .kpi-row { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+    
+    /* Verdicts */
     .verdicts-grid, .v-grid { grid-template-columns: 1fr !important; }
+    
+    /* Tablas */
     .comp-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .comp-table { font-size: 11px; min-width: 500px; }
-    .comp-table thead th, .comp-table tbody td { padding: 8px 10px; }
+    .comp-table { font-size: 10px; min-width: 400px; }
+    .comp-table thead th, .comp-table tbody td { padding: 6px 8px; }
+    
+    /* Highlight boxes */
     .highlight-boxes { flex-direction: column !important; }
     .highlight-box { width: 100% !important; box-sizing: border-box; }
-    .conclusiones { padding: 16px; }
-    .chart-card { padding: 14px; }
-    .analysis-card { padding: 14px; }
-    .fuente { font-size: 11px !important; }
+    
+    /* Cards */
+    .conclusiones { padding: 14px; }
+    .chart-card { padding: 12px; }
+    .analysis-card { padding: 12px; }
+    
+    /* Edu tabs */
+    .edu-tabs { flex-direction: column !important; }
+    .edu-tab { border-radius: 8px !important; margin-bottom: 4px; }
+    
+    /* Edu grid */
+    .edu-grid3 { grid-template-columns: 1fr !important; gap: 10px; }
+    .edu-grid2 { grid-template-columns: 1fr !important; gap: 10px; }
+    
+    /* V cards */
+    .v-cards { grid-template-columns: 1fr !important; }
   }
   /* ===== TABLET ===== */
   @media (max-width: 1024px) and (min-width: 769px) {
     body { padding: 16px; }
     .analysis-grid { grid-template-columns: 1fr 1fr !important; }
     .kpi-grid, .kpi-row { grid-template-columns: repeat(2, 1fr) !important; }
+    canvas { max-height: 230px !important; }
   }
 
 </style>
@@ -834,7 +864,143 @@ window.showEduPanel = function(id) {
 </script>
 
 <script>
-// Fix: exponer showEduPanel globalmente
+
+  // ===== CHARTS FALTANTES: barCompChart, recoveryChart, brechaChart =====
+  
+  // Chart 1: Comparación directa 2019 vs Actualidad (barras agrupadas)
+  const barCompCtx = document.getElementById('barCompChart');
+  if (barCompCtx) {
+    new Chart(barCompCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Desempleo (%)', 'Pobreza Monetaria (%)', 'Pobreza Multidimensional (%)'],
+        datasets: [
+          {
+            label: 'Pre-pandemia 2019',
+            data: [10.5, 35.7, 17.5],
+            backgroundColor: 'rgba(107, 18, 52, 0.7)',
+            borderColor: 'rgba(107, 18, 52, 1)',
+            borderWidth: 1.5,
+            borderRadius: 4
+          },
+          {
+            label: 'Actualidad (2024-2026)',
+            data: [9.2, 32.7, 9.9],
+            backgroundColor: 'rgba(22, 163, 74, 0.7)',
+            borderColor: 'rgba(22, 163, 74, 1)',
+            borderWidth: 1.5,
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y + '%' } }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { callback: v => v + '%', font: { size: 10 } }, grid: { color: '#f1f5f9' } },
+          x: { ticks: { font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  // Chart 2: Índice de recuperación (base 100 = 2019)
+  const recoveryCtx = document.getElementById('recoveryChart');
+  if (recoveryCtx) {
+    new Chart(recoveryCtx, {
+      type: 'line',
+      data: {
+        labels: ['2019', '2020', '2021', '2022', '2023', '2024/2025'],
+        datasets: [
+          {
+            label: 'Desempleo (↓ mejor)',
+            data: [100, 151.4, 123.8, 106.7, 95.2, 87.6],
+            borderColor: '#6b1234',
+            backgroundColor: 'rgba(107,18,52,0.08)',
+            tension: 0.3, pointRadius: 4, borderWidth: 2
+          },
+          {
+            label: 'Pobreza Monetaria (↓ mejor)',
+            data: [100, 119.0, 105.3, 98.0, 93.6, 91.6],
+            borderColor: '#ea580c',
+            backgroundColor: 'rgba(234,88,12,0.08)',
+            tension: 0.3, pointRadius: 4, borderWidth: 2
+          },
+          {
+            label: 'Pobreza Multidimensional (↓ mejor)',
+            data: [100, 103.4, 85.7, 73.7, 60.0, 56.6],
+            borderColor: '#16a34a',
+            backgroundColor: 'rgba(22,163,74,0.08)',
+            tension: 0.3, pointRadius: 4, borderWidth: 2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y } }
+        },
+        scales: {
+          y: {
+            ticks: { font: { size: 10 } },
+            grid: { color: '#f1f5f9' },
+            title: { display: true, text: 'Índice (2019 = 100)', font: { size: 10 } }
+          },
+          x: { ticks: { font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  // Chart 3: Brecha entre pobreza monetaria y multidimensional (2012-2025)
+  const brechaCtx = document.getElementById('brechaChart');
+  if (brechaCtx) {
+    new Chart(brechaCtx, {
+      type: 'line',
+      data: {
+        labels: ['2012','2013','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'],
+        datasets: [
+          {
+            label: 'Pobreza Monetaria (%)',
+            data: [32.7, 30.6, 28.5, 27.8, 28.0, 26.9, 27.0, 35.7, 42.5, 39.3, 36.6, 33.0, 32.7, null],
+            borderColor: '#ea580c',
+            backgroundColor: 'rgba(234,88,12,0.1)',
+            tension: 0.3, pointRadius: 3, borderWidth: 2, fill: false
+          },
+          {
+            label: 'Pobreza Multidimensional (%)',
+            data: [27.0, 24.8, 21.9, 20.2, 17.8, 17.0, 19.6, 17.5, 18.1, 16.0, 12.9, 11.5, null, 9.9],
+            borderColor: '#16a34a',
+            backgroundColor: 'rgba(22,163,74,0.1)',
+            tension: 0.3, pointRadius: 3, borderWidth: 2, fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y + '%' : 'N/D') } }
+        },
+        scales: {
+          y: {
+            ticks: { callback: v => v + '%', font: { size: 10 } },
+            grid: { color: '#f1f5f9' }
+          },
+          x: { ticks: { font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  // Fix: exponer showEduPanel globalmente
 window.showEduPanel = function(id) {
   // Ocultar todos los paneles
   document.querySelectorAll('.edu-panel').forEach(function(p) {
